@@ -1,0 +1,41 @@
+name:  Luma CI
+on: [push]
+jobs:
+  tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Setup PHP 8.0
+        uses: shivammathur/setup-php@v2
+        with:
+            php-version: '8.0'
+            tools: composer:v2
+
+      - name: Git clone
+        uses: actions/checkout@v2
+        
+      - name: Starting Mysql
+        run:  sudo /etc/init.d/mysql start
+
+      - name: Copying .env
+        run: cp .env.example .env
+
+      - name: Setuping project
+        run: make install
+
+      - name: Unit tests
+        run: bin/phpunit
+
+      - name: Static analysis
+        run: bin/phpstan
+
+      - name: Fixing coding standards
+        run: bin/phpcbf
+        continue-on-error: true
+  
+      - name: Auto commit coding standards
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: ":robot::art: Fix CS"
+
+      - name: Checking coding standards
+        run: bin/phpcs
